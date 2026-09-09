@@ -1,0 +1,44 @@
+modLoader="javafml"
+
+loaderVersion="${loader_version_range}"
+
+license="${mod_license}"
+
+[[mods]]
+
+modId="${mod_id}"
+
+version="${mod_version}"
+
+displayName="${mod_name}"
+
+authors="Nexy451z"
+
+description='''
+Quality-of-life tweaks for Refined Storage:
+- JEI recipe transfer (+ button) now accepts tools with reduced durability
+  (durability difference no longer counts as a missing ingredient).
+- Bucket-like containers (water bucket, lava bucket, etc.) are automatically
+  refilled from the network after crafting on the RS Crafting Grid, and the
+  leftover empty container is returned to the network.
+
+Refined Storage 2 is required for these tweaks to take effect; without it the
+mod simply does nothing.
+'''
+
+[[mixins]]
+config="nexrstweaks.mixins.json"
+
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="[${neo_version},)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
