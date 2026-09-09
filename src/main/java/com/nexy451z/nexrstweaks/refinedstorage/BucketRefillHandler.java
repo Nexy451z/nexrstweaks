@@ -48,7 +48,7 @@ public class BucketRefillHandler {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
-        if (event.getServer().getTickCount() % 2 != 0) return;
+        // 毎tick監視（「配置→クラフト」の高速連打の取りこぼしを減らす）
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             if (!(player.containerMenu instanceof AbstractCraftingGridContainerMenu menu)) {
                 bucketState.remove(player.getUUID());
@@ -103,7 +103,7 @@ public class BucketRefillHandler {
                 ItemStack prevStack = prev[i];
                 prev[i] = cur.copy();
                 if (cur.isEmpty() || cur.getCount() != 1 || prevStack == null || prevStack.isEmpty()) continue;
-                if (!ItemStack.isSameItem(cur, prevStack)) continue;
+                // ※同アイテム判定は入れない: 「素材→残余」への変化自体が検知対象
 
                 // 前回が「素材」で今回が「その残余」のときのみ補填する（プレイヤーが最初から置いた空容器は触らない）
                 Item expectedEmpty = prevStack.getItem().getCraftingRemainingItem();
