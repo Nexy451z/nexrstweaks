@@ -1,43 +1,32 @@
 # NexRSTweaks
 
-![NexRSTweaks](logo.png)
-
-Quality-of-life tweaks for **Refined Storage 2** on **Minecraft 1.21.1** (NeoForge 21.1.x).
+Small quality-of-life tweaks for Refined Storage on NeoForge.
 
 ## Features
 
-1. **Fuzzy tool matching for the Refined Storage crafting grid** — recipes whose ingredients include
-   tools (hoe, pickaxe, axe, etc.) work even when the matching tool in your inventory / network has
-   lost some durability. Two sides are patched (mixin, silently skipped if Refined Storage updates
-   break it): the JEI `+` button availability check, and the actual server-side transfer
-   (`RecipeMatrixContainer` network extraction), so the transferred tool is the real damaged variant
-   and never spawns as a fresh item. Strict-component items (potions, enchanted books, etc.) are
-   never relaxed.
+- **Damaged tools in JEI recipe transfer (+ button)** — tools with reduced durability (hoes, pickaxes, …) are no longer treated as a missing ingredient when transferring a recipe into the RS crafting grid. A fallback only kicks in when the exact-match lookup fails, and it still requires the same item.
+- **Bucket-like container auto-refill** — when crafting on the RS crafting grid consumes a container item (water bucket, lava bucket, …) and leaves the empty container in the slot, the tweak pulls the source item from the network, refills the slot and returns the empty container to the network.
 
-2. **Automatic container refill** — after crafting on the RS Crafting Grid with a bucket-like item
-   (water bucket, lava bucket, milk bucket, modded containers — anything whose `craftingRemainingItem`
-   is the leftover container), the leftover container is returned to the network and the ingredient is
-   pulled from the network back into the grid slot. If the network does not hold the ingredient, the
-   mod does nothing and the container behaves vanilla (stays in the slot). Empty containers you placed
-   yourself are never touched — the refill only fires on an observed "ingredient → leftover" transition.
+## Supported versions
+
+| Branch | Minecraft | NeoForge | Refined Storage |
+|---|---|---|---|
+| `main` | 1.21.1 | 21.1.x | 2.0.9 |
+| `port/26.1.2` | 26.1.2 | 26.1.2.x | 3.2.1 |
 
 ## Requirements
 
-- Minecraft 1.21.1, NeoForge 21.1.235+
-- Refined Storage 2 (tested with 2.0.9) — the mod does nothing without it
+- **Refined Storage** (the mod does nothing without it).
+- The RS JEI integration is additionally required for the tool-transfer tweak.
+- Mixins are declared with `required:false` + `defaultRequire:0`, so if an RS update changes the targets the tweaks are skipped silently instead of crashing.
 
-## Building
+## Build
 
 ```powershell
-./gradlew build
-```
-
-Pin the Refined Storage version in `gradle.properties`:
-
-```properties
-refinedstorage_version=2.0.9
+.\gradlew.bat build
+# output: build\libs\nexrstweaks-<version>.jar
 ```
 
 ## License
 
-MIT
+MIT License — see [LICENSE](LICENSE).
