@@ -1,5 +1,7 @@
 # NexRSTweaks
 
+![NexRSTweaks](logo.png)
+
 Quality-of-life tweaks for **Refined Storage 2** on **Minecraft 1.21.1** (NeoForge 21.1.x).
 
 ## Features

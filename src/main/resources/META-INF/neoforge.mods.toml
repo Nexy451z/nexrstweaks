@@ -12,6 +12,9 @@ version="${mod_version}"
 
 displayName="${mod_name}"
 
+# A file name (in the root of the mod JAR) containing a logo for display
+logoFile="nexrstweaks.png" #optional
+
 authors="Nexy451z"
 
 description='''
