@@ -4,11 +4,13 @@ Quality-of-life tweaks for **Refined Storage 2** on **Minecraft 1.21.1** (NeoFor
 
 ## Features
 
-1. **Fuzzy tool matching for the JEI `+` transfer button** — on the RS Crafting Grid, recipes whose
-   ingredients include tools (hoe, pickaxe, axe, etc.) can be transferred even when the matching tool
-   in your inventory / network has lost some durability. The vanilla-exact check by Refined Storage's
-   own transfer handler is kept, and only when it fails we retry with the same-item/durability-variant
-   match. Strict-component items (potions, enchanted books, etc.) are never relaxed.
+1. **Fuzzy tool matching for the Refined Storage crafting grid** — recipes whose ingredients include
+   tools (hoe, pickaxe, axe, etc.) work even when the matching tool in your inventory / network has
+   lost some durability. Two sides are patched (mixin, silently skipped if Refined Storage updates
+   break it): the JEI `+` button availability check, and the actual server-side transfer
+   (`RecipeMatrixContainer` network extraction), so the transferred tool is the real damaged variant
+   and never spawns as a fresh item. Strict-component items (potions, enchanted books, etc.) are
+   never relaxed.
 
 2. **Automatic container refill** — after crafting on the RS Crafting Grid with a bucket-like item
    (water bucket, lava bucket, milk bucket, modded containers — anything whose `craftingRemainingItem`

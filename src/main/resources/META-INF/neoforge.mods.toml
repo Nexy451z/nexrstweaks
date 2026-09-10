@@ -30,6 +30,13 @@ mod simply does nothing.
 config="nexrstweaks.mixins.json"
 
 [[dependencies.${mod_id}]]
+    modId="refinedstorage"
+    type="optional"
+    versionRange="[2.0.9,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
     modId="neoforge"
     type="required"
     versionRange="[${neo_version},)"

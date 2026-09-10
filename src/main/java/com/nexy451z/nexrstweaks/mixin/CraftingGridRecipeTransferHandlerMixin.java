@@ -38,8 +38,11 @@ public abstract class CraftingGridRecipeTransferHandlerMixin {
             if (key instanceof ItemResource itemKey) {
                 ItemStack needed = itemKey.toItemStack();
                 if (needed != null && !needed.isEmpty() && ItemMatchHelper.isToolOrDamageable(needed)) {
-                    for (ResourceKey candidate : available.getAll()) {
+                    // ライブkeySetのループ中mutationを避けるためスナップショットを取り、
+                    // 完全一致のItemStack生成を避けるため先にItem単位でフィルタする
+                    for (ResourceKey candidate : java.util.List.copyOf(available.getAll())) {
                         if (!(candidate instanceof ItemResource candidateItem)) continue;
+                        if (candidateItem.item() != itemKey.item()) continue;
                         ItemStack held = candidateItem.toItemStack();
                         if (held == null || held.isEmpty()) continue;
                         if (!ItemStack.isSameItem(held, needed)) continue;

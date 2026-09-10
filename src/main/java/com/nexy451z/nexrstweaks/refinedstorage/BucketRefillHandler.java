@@ -2,16 +2,16 @@ package com.nexy451z.nexrstweaks.refinedstorage;
 
 import com.nexy451z.nexrstweaks.NexRSTweaks;
 import com.refinedmods.refinedstorage.common.grid.AbstractCraftingGridContainerMenu;
-import com.refinedmods.refinedstorage.common.grid.AbstractGridContainerMenu;
 import com.refinedmods.refinedstorage.common.grid.CraftingGrid;
-import com.refinedmods.refinedstorage.common.api.grid.Grid;
 import com.refinedmods.refinedstorage.common.support.RecipeMatrixContainer;
 import com.refinedmods.refinedstorage.common.support.resource.ItemResource;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
@@ -34,10 +34,20 @@ import java.util.concurrent.ConcurrentHashMap;
 @EventBusSubscriber(modid = NexRSTweaks.MODID)
 public class BucketRefillHandler {
 
-    /** プレイヤーごとのマトリクス前回状態（補填トリガー判定用）: UUID -> スロット9個分 */
-    private static final Map<UUID, ItemStack[]> bucketState = new ConcurrentHashMap<>();
+    /** プレイヤーごとの状態（メニュー識別 + マトリクス前回スロット9個分） */
+    private static final Map<UUID, MenuState> bucketState = new ConcurrentHashMap<>();
     /** 空容器 -> その容器を生成しうる元アイテム群（遅延構築） */
     private static volatile Map<Item, List<Item>> containerSourceMap = null;
+
+    private static final class MenuState {
+        final AbstractContainerMenu menu;
+        final ItemStack[] prev;
+
+        MenuState(AbstractContainerMenu menu, int slots) {
+            this.menu = menu;
+            this.prev = new ItemStack[slots];
+        }
+    }
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -48,6 +58,7 @@ public class BucketRefillHandler {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        if (!ModList.get().isLoaded("refinedstorage")) return; // RS未導入環境ではクラス参照しない
         // 毎tick監視（「配置→クラフト」の高速連打の取りこぼしを減らす）
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             if (!(player.containerMenu instanceof AbstractCraftingGridContainerMenu menu)) {
@@ -94,7 +105,13 @@ public class BucketRefillHandler {
             if (storage == null) return;
 
             int size = Math.min(9, matrix.getContainerSize());
-            ItemStack[] prev = bucketState.computeIfAbsent(player.getUUID(), k -> new ItemStack[9]);
+            // メニューインスタンスが変わったら状態をリセット（グリッド間の直接切替で誤補填しない）
+            MenuState state = bucketState.get(player.getUUID());
+            if (state == null || state.menu != menu || state.prev.length != size) {
+                state = new MenuState(menu, size);
+                bucketState.put(player.getUUID(), state);
+            }
+            ItemStack[] prev = state.prev;
             com.refinedmods.refinedstorage.common.api.storage.PlayerActor actor =
                     new com.refinedmods.refinedstorage.common.api.storage.PlayerActor(player);
 
@@ -109,11 +126,17 @@ public class BucketRefillHandler {
                 Item expectedEmpty = prevStack.getItem().getCraftingRemainingItem();
                 if (expectedEmpty == null || expectedEmpty != cur.getItem()) continue;
 
+                // 補填元は「実際にそのスロットにあった素材」を最優先（別種バケツが静かに入るのを防ぐ）
+                if (tryRefillFromStorage(player, storage, actor, matrix, i, cur, prevStack.getItem())) {
+                    continue;
+                }
+                // 前回素材がストレージになければ、同種残余を持つ他のアイテムで代替する
                 List<Item> sources = containerSources().get(cur.getItem());
                 if (sources == null || sources.isEmpty()) continue;
                 for (Item source : sources) {
-                    if (tryRefillFromStorage(storage, actor, matrix, i, cur, source)) {
-                        return;
+                    if (source == prevStack.getItem()) continue;
+                    if (tryRefillFromStorage(player, storage, actor, matrix, i, cur, source)) {
+                        break;
                     }
                 }
             }
@@ -122,6 +145,7 @@ public class BucketRefillHandler {
     }
 
     private static boolean tryRefillFromStorage(
+            ServerPlayer player,
             com.refinedmods.refinedstorage.api.storage.Storage storage,
             com.refinedmods.refinedstorage.common.api.storage.PlayerActor actor,
             RecipeMatrixContainer matrix,
@@ -145,9 +169,12 @@ public class BucketRefillHandler {
             matrix.setItem(slot, new ItemStack(source, 1));
             long inserted = storage.insert(empty, 1L, com.refinedmods.refinedstorage.api.core.Action.EXECUTE, actor);
             if (inserted != 1L) {
-                // ストレージ満杯等: 元アイテムをストレージに戻し、スロットは空容器のままにする（何もしない挙動）
-                storage.insert(full, 1L, com.refinedmods.refinedstorage.api.core.Action.EXECUTE, actor);
+                // ストレージ満杯等: 元アイテムをストレージに戻せない場合はプレイヤーに渡す（消失しない安全側）
                 matrix.setItem(slot, emptyContainer.copy());
+                ItemStack refund = new ItemStack(source, (int) extracted);
+                if (!player.getInventory().add(refund)) {
+                    player.drop(refund, false);
+                }
                 return false;
             }
             return true;
