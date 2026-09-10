@@ -77,8 +77,10 @@ public class BucketRefillHandler {
                 Map<Item, List<Item>> built = new HashMap<>();
                 for (Item item : net.minecraft.core.registries.BuiltInRegistries.ITEM) {
                     try {
-                        if (!item.hasCraftingRemainingItem()) continue;
-                        Item remaining = item.getCraftingRemainingItem();
+                        // 26.1: getCraftingRemainder() は ItemStackTemplate(またはnull)を返す
+                        net.minecraft.world.item.ItemStackTemplate template = item.getCraftingRemainder();
+                        if (template == null) continue;
+                        Item remaining = template.typeHolder().value();
                         if (remaining != null) {
                             built.computeIfAbsent(remaining, k -> new ArrayList<>()).add(item);
                         }
@@ -123,7 +125,8 @@ public class BucketRefillHandler {
                 // ※同アイテム判定は入れない: 「素材→残余」への変化自体が検知対象
 
                 // 前回が「素材」で今回が「その残余」のときのみ補填する（プレイヤーが最初から置いた空容器は触らない）
-                Item expectedEmpty = prevStack.getItem().getCraftingRemainingItem();
+                net.minecraft.world.item.ItemStackTemplate expectedTemplate = prevStack.getItem().getCraftingRemainder();
+                Item expectedEmpty = (expectedTemplate != null) ? expectedTemplate.typeHolder().value() : null;
                 if (expectedEmpty == null || expectedEmpty != cur.getItem()) continue;
 
                 // 補填元は「実際にそのスロットにあった素材」を最優先（別種バケツが静かに入るのを防ぐ）

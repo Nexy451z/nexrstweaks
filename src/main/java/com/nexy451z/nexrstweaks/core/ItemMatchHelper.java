@@ -18,6 +18,8 @@ public final class ItemMatchHelper {
     /**
      * ツールや耐久値を持つアイテム（または消耗可能なアイテム）か判定する。
      * 厳格コンポーネント（ポーション・エンチャント本・怪しいシチュー等）を持つ場合は緩和対象から除外する。
+     * 26.1以降は武器/防具/ツールがデータ駆動化されTieredItem/DiggerItem等の型が消滅したため、
+     * 「ダメージ値を持つか」で統一的に判定する。
      */
     public static boolean isToolOrDamageable(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
@@ -29,21 +31,6 @@ public final class ItemMatchHelper {
                 return true;
             }
             if (stack.has(DataComponents.DAMAGE) || stack.has(DataComponents.MAX_DAMAGE)) {
-                return true;
-            }
-
-            net.minecraft.world.item.Item item = stack.getItem();
-            if (item instanceof net.minecraft.world.item.TieredItem
-                    || item instanceof net.minecraft.world.item.DiggerItem
-                    || item instanceof net.minecraft.world.item.SwordItem
-                    || item instanceof net.minecraft.world.item.ArmorItem
-                    || item instanceof net.minecraft.world.item.ShearsItem
-                    || item instanceof net.minecraft.world.item.BowItem
-                    || item instanceof net.minecraft.world.item.CrossbowItem
-                    || item instanceof net.minecraft.world.item.FishingRodItem
-                    || item instanceof net.minecraft.world.item.TridentItem
-                    || item instanceof net.minecraft.world.item.FlintAndSteelItem
-                    || item instanceof net.minecraft.world.item.ShieldItem) {
                 return true;
             }
         } catch (Throwable ignored) {

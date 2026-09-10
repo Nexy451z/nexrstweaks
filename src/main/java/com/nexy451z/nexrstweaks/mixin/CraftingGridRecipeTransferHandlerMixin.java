@@ -11,12 +11,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
- * Refined StorageクラフトグリッドのJEI転送ハンドラ(+ボタン)で、
- * 耐久値が減ったツール（クワ・ツルハシ等）が「正規の新品スタック」とのコンポーネント差異で
- * 不足扱いされる問題を緩和する。
- * 既存の完全一致removeが失敗した場合に限り、同一アイテムかつ耐久値系の違いだけの候補を
- * 引き当て直す（ItemMatchHelperのfuzzy判定と同じ粒度）。
- * 対象クラスが存在しない/変更された場合は設定 required:false により静かにスキップされる。
+ * Refined Storage クラフトグリッドの JEI 転送ハンドラ(+ボタン)で、
+ * 耐久値が減ったツール(クワ・ツルハシ等)と「レシピの新品スタック」とのコンポーネント差を
+ * 無視して引き当てられるように緩和する。
+ * 完全一致 remove が失敗した場合に限り、同アイテムで耐久値系の違いを許容して再試行する
+ * (ItemMatchHelper の fuzzy 判定と同じ基準)。
+ * 対象クラスが存在しない/変更された場合は required:false により静かにスキップされる。
  */
 @Mixin(targets = "com.refinedmods.refinedstorage.jei.common.CraftingGridRecipeTransferHandler", remap = false)
 public abstract class CraftingGridRecipeTransferHandlerMixin {
@@ -38,8 +38,8 @@ public abstract class CraftingGridRecipeTransferHandlerMixin {
             if (key instanceof ItemResource itemKey) {
                 ItemStack needed = itemKey.toItemStack();
                 if (needed != null && !needed.isEmpty() && ItemMatchHelper.isToolOrDamageable(needed)) {
-                    // ライブkeySetのループ中mutationを避けるためスナップショットを取り、
-                    // 完全一致のItemStack生成を避けるため先にItem単位でフィルタする
+                    // 呼び出し元 keySet のループ中 mutation を避けるためスナップショットを走査し、
+                    // 完全一致の ItemStack が取れない候補は生 Item 単位でフィルタする
                     for (ResourceKey candidate : java.util.List.copyOf(available.getAll())) {
                         if (!(candidate instanceof ItemResource candidateItem)) continue;
                         if (candidateItem.item() != itemKey.item()) continue;

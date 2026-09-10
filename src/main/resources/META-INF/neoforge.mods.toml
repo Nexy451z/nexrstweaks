@@ -35,7 +35,7 @@ config="nexrstweaks.mixins.json"
 [[dependencies.${mod_id}]]
     modId="refinedstorage"
     type="optional"
-    versionRange="[2.0.9,)"
+    versionRange="[3.2.1,)"
     ordering="AFTER"
     side="BOTH"
 
